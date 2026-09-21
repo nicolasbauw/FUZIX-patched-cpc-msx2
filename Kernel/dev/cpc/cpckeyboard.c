@@ -14,7 +14,13 @@ uint8_t keybuf[10];
 /* Previous state */
 uint8_t keymap[10];
 
-struct vt_repeat keyrepeat = { 25, 2 };
+/* Counted in timer ticks, and this platform ticks at 300Hz - six times the
+   rate of the 50Hz ports these numbers look borrowed from. The old { 25, 2 }
+   meant a key started repeating after 83ms and then fired every 6.7ms, some
+   150 characters a second, which makes the console barely usable. The zx port
+   uses { 50, 5 } at 50Hz, i.e. one second then 100ms; 255 is as close to that
+   first delay as the uint8_t counter reaches. */
+struct vt_repeat keyrepeat = { 255, 30 };
 
 static uint8_t kbd_timer;
 
