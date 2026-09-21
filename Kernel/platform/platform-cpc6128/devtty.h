@@ -30,6 +30,8 @@ __sfr __banked __at 0xFBD0 usifdata;
 __sfr __banked __at 0xFBD1 usifctrl;
 __sfr __banked __at 0xFBDD usifspr;
 
+extern uint8_t usifac_present;
+
 #define USIFAC_RESET_COMMAND  0
 #define USIFAC_CLEAR_RECEIVE_BUFFER_COMMAND 1
 #define USIFAC_DISABLE_BURST_MODE_COMMAND 3

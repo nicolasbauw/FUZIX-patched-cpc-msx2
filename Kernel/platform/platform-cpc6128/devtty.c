@@ -13,6 +13,9 @@
 static char tbuf1[TTYSIZ];
 #if defined CONFIG_USIFAC_SERIAL
 static char tbuf2[TTYSIZ];
+/* Deliberately not in the discard segment: the timer interrupt reads it
+   for the lifetime of the system, long after discard is reclaimed. */
+uint8_t usifac_present;
 #endif
 
 uint8_t vtattr_cap = VTA_UNDERLINE;
@@ -120,8 +123,15 @@ void tty_setup(uint8_t minor, uint8_t flags)
 }
 #if defined CONFIG_USIFAC_SERIAL
 void tty_pollirq_usifac(void)
-{		
-	while (usifctrl == 0xff)
+{
+	uint8_t n = 64;
+
+	if (!usifac_present)
+		return;
+	/* Bounded on purpose. usifctrl reads 0xff both when a byte is waiting
+	   and when nothing drives the bus, so an absent or wedged card would
+	   keep this loop - and the timer interrupt it runs in - forever. */
+	while (usifctrl == 0xff && --n)
 		tty_inproc(2, usifdata);
 	tty_outproc(2);
 }

@@ -29,19 +29,22 @@ void plt_copyright(void)
 void usifac_serial_init()
 {
 	char c;
+	uint8_t n = 255;
 	kprintf("Configuring Usifac serial port\n");
 	usifctrl = USIFAC_RESET_COMMAND;
 	usifctrl = USIFAC_CLEAR_RECEIVE_BUFFER_COMMAND;
 	usifctrl = USIFAC_DISABLE_BURST_MODE_COMMAND;
 	usifctrl = USIFAC_DISABLE_DIRECT_MODE_COMMAND;
 	usifctrl = USIFAC_SET_115200B_COMMAND;
-	while (usifctrl == 0xff)
+	/* Bounded: with no card fitted the bus floats and usifctrl reads 0xff
+	   forever, so an unbounded flush never reaches the probe below. */
+	while (usifctrl == 0xff && --n)
 		c=usifdata; /*flush transmit buffer*/
 	c=usifspr; /*read baudrate*/
 	if (c == USIFAC_SET_115200B_COMMAND)
 	{
 		kprintf("Usifac serial port configured at 115200 baud\n");
-	/*	usifac_present = 1;*/
+		usifac_present = 1;
 	}
 }
 	#endif
