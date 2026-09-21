@@ -587,7 +587,7 @@ static unsigned hex[] = {
 
 void kputval(unsigned int n, unsigned *div, uint_fast8_t zp)
 {
-	static char digit[] = "0123456789ABCDEF";
+	static const char digit[] = "0123456789ABCDEF";
 	register unsigned i;
 	register uint_fast8_t c;
 	while((i = *div++) != 0) {
