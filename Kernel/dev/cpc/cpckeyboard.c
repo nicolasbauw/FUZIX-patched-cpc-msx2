@@ -319,6 +319,12 @@ and https://github.com/lronaldo/cpctelera/blob/master/cpctelera/src/keyboard/cpc
 								;; ... If any key is pressed, some bit will be 0, so A != 0xFF, which means A+1 != 0, and 
 								;; ... we will be returning TRUE (A > 0)
 		ld    l, a           ;; [1] L = A (Set return value for C calls in L)
+		; The return value is the HL pair, not L alone: the compiled caller
+		; tests it with "ld a,h / or a,l". H still holds the high byte of the
+		; _keybuf pointer walked above, which is never zero, so the caller
+		; always saw a true result and the "nothing changed" fast path never
+		; triggered - on every single keyboard poll.
+		ld    h, #0
 		pop af
 		ex af, af'
 
