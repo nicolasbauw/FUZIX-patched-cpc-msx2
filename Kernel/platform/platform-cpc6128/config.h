@@ -32,6 +32,21 @@
 
 #undef CONFIG_KMOD
 
+/* Symbiface II real time clock: a DS12885 behind an index/data register
+   pair, on the same expansion card as the X-MASS mass storage. */
+#define CONFIG_SYMBIFACE_RTC
+#ifdef CONFIG_SYMBIFACE_RTC
+    #define CONFIG_RTC_DS12885
+    #define CONFIG_RTC_EXTENDED
+    #define RTC_ADDR	0xFD15	/* register address */
+    #define RTC_DATA	0xFD14	/* register data */
+    #define CONFIG_RTC
+    #define CONFIG_RTC_INTERVAL 10
+    /* CONFIG_RTC_FULL is what puts case 5 in sys_read(), and reading
+       /dev/rtc is how setdate skips its date and time prompts. */
+    #define CONFIG_RTC_FULL
+#endif
+
 /*Usifac compatible serial device*/
 #define CONFIG_USIFAC_SERIAL
 #undef CONFIG_USIFAC_SLIP

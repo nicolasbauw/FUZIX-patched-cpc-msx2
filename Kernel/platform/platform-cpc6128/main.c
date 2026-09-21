@@ -5,9 +5,38 @@
 #include <printf.h>
 #include <devtty.h>
 #include <devinput.h>
+#include "../../dev/cpc/ds12885.h"
 
 uint16_t ramtop = PROGTOP;
 uint16_t swap_dev = 0xFFFF;
+
+#ifdef CONFIG_SYMBIFACE_RTC
+/* The generic layer calls plt_rtc_*; the ds12885 driver names its own
+   sf_plt_rtc_* so that a platform with several clocks can choose. Here
+   there is only the Symbiface one. */
+uint8_t plt_rtc_secs(void)
+{
+	if (ds12885_present)
+		return sf_plt_rtc_secs();
+	return 0xff;
+}
+
+int plt_rtc_read(void)
+{
+	if (ds12885_present)
+		return sf_plt_rtc_read();
+	udata.u_error = EOPNOTSUPP;
+	return -1;
+}
+
+int plt_rtc_write(void)
+{
+	if (ds12885_present)
+		return sf_plt_rtc_write();
+	udata.u_error = EOPNOTSUPP;
+	return -1;
+}
+#endif
 
 /* On idle we spin checking for the terminals. Gives us more responsiveness
    for the polled ports */

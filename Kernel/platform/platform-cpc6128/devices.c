@@ -9,6 +9,8 @@
 /*#include <tinysd.h>*/
 #include <devtty.h>
 #include <devfdc765.h>
+#include <printf.h>
+#include "../../dev/cpc/ds12885.h"
 /*#include <netdev.h>*/
 #include <devrd.h>
 
@@ -50,6 +52,11 @@ bool validdev(uint16_t dev)
 
 void device_init(void)
 {
+#ifdef CONFIG_RTC_DS12885
+  ds12885_init();
+  if (ds12885_present)
+    kprintf("Symbiface RTC detected\n");
+#endif
 #ifdef CONFIG_USIFAC_SERIAL
   usifac_serial_init();
 #endif

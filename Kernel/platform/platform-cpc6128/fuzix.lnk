@@ -56,5 +56,7 @@ platform/platform-cpc6128/fdc765.rel
 platform/platform-cpc6128/ch375.rel
 platform/platform-cpc6128/albireo.rel
 platform/platform-cpc6128/devrd.rel
+platform/platform-cpc6128/ds12885.rel
+platform/platform-cpc6128/ds12885_z80.rel
 platform/platform-cpc6128/net_native.rel
 -e

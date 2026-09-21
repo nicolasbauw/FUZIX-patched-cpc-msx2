@@ -1,8 +1,8 @@
 CSRCS = devtty.c devices.c main.c devrd.c rd_cpcsme.c
 CDSRCS = discard.c
-DSRCS = ../../dev/tinyide.c ../../dev/tinydisk.c ../../dev/devfdc765.c ../../dev/ch375.c
+DSRCS = ../../dev/tinyide.c ../../dev/tinydisk.c ../../dev/devfdc765.c ../../dev/ch375.c ../../dev/ds12885_z80.c
 DDSRCS = ../../dev/tinyide_discard.c ../../dev/tinydisk_discard.c
-DZSRCS = ../../dev/cpc/cpcide.c ../../dev/cpc/cpckeyboard.c ../../dev/cpc/devinput.c ../../dev/cpc/albireo.c
+DZSRCS = ../../dev/cpc/cpcide.c ../../dev/cpc/cpckeyboard.c ../../dev/cpc/devinput.c ../../dev/cpc/albireo.c ../../dev/cpc/ds12885.c
 DDZSRCS =
 ASRCS = crt0.s cpc6128.s cpcvideo.s fdc765.s  
 ASRCS += tricks.s commonmem.s 
