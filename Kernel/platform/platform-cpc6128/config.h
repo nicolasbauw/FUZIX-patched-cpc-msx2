@@ -139,6 +139,13 @@
 
 #define BOOTDEVICENAMES "hd#,fd"
 
+/* Racine à monter sans rien demander. Le noyau propose l'invite "bootdev:"
+   dès que cette ligne est absente ou ne désigne rien de valable, et
+   set_boot_line() l'ignore de toute façon si une touche est déjà enfoncée :
+   l'invite reste donc joignable, il suffit de maintenir une touche au
+   démarrage. Commenter pour retrouver la question à chaque fois. */
+#define BOOT_LINE "hda1"
+
 #define CONFIG_SMALL
 
 

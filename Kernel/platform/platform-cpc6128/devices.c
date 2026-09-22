@@ -74,6 +74,11 @@ void device_init(void)
   sock_init();
 #endif
 
-
+#ifdef BOOT_LINE
+  /* Après les pilotes, pas avant : set_boot_line() passe par pause(), donc
+     par l'horloge, et laisse volontairement le temps à une touche d'arriver
+     pour que l'utilisateur puisse reprendre la main sur l'invite. */
+  set_boot_line(BOOT_LINE);
+#endif
 }
 
