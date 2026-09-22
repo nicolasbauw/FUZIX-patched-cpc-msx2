@@ -28,6 +28,60 @@ static uint8_t keybyte, keybit;
 static uint8_t newkey;
 static int8_t keysdown = 0;
 
+#ifdef CONFIG_KBD_AZERTY
+/* French AZERTY matrix, taken straight from the key translation tables of a
+   real French OS ROM (OS6128-AZERTY): the unshifted table sits at offset
+   0x1EEF and the shifted one at 0x1F3F, 80 bytes each, indexed exactly like
+   the arrays below (key number = line * 8 + bit). They were located by
+   searching the ROM for the letter positions, which are the same in every
+   locale, and the match is unique.
+
+   The one thing worth knowing before reading this table: the French ROM is
+   ISO-646-FR. It emits ordinary ASCII and its *font* draws some of those
+   codes as accented letters, so the keycap legends and the bytes disagree
+   in a way that looks alarming until you know the rule:
+
+	byte 0x7C "|" is drawn as "ù"    byte 0x7B "{" is drawn as "é"
+	byte 0x7D "}" is drawn as "è"    byte 0x5C "\" is drawn as "ç"
+	byte 0x40 "@" is drawn as "à"    byte 0x5D "]" is drawn as "§"
+	byte 0x5B "[" is drawn as "°"
+
+   That is why the "ù" key next to "m" is the RSX prefix in BASIC: it always
+   was the pipe, 0x7C, just painted differently. Which is a gift here -
+   FUZIX draws its own ASCII font, so every symbol a shell needs (| \ @ [ ]
+   { } ! # $ * < >) is reachable from a French keyboard after all.
+
+   Rows 0, 1 and 9 are left as the UK table has them: the ROM holds firmware
+   control codes there (cursor keys, the numeric keypad, and the joystick
+   lines that alias onto row 9), which FUZIX translates its own way and
+   which do not differ between locales. */
+uint8_t keyboard[10][8] = {
+	{KEY_UP, KEY_RIGHT, KEY_DOWN, '9', '6', '3',13, '.'},
+	{KEY_LEFT ,KEY_COPY , '7', '8', '5', '1', '2', '0'},
+	{KEY_DEL, '*', 13, '#', '4', 0/*SHIFT*/, '$', 0/*CONTROL*/ },
+	{'-', ')', '^', 'p', '|'/*drawn "ù"*/, 'm', '=', ':'},
+	{'@'/*drawn "à"*/, '\\'/*drawn "ç"*/, 'o', 'i', 'l', 'k', ',', ';'},
+	{'!', '}'/*drawn "è"*/, 'u', 'y', 'h', 'j', 'n', ' '},
+	{']'/*drawn "§"*/, '(', 'r', 't', 'g', 'f', 'b', 'v'},
+	{'\'', '"', 'e', 'z', 's', 'd', 'c', 'x'},
+	{'&', '{'/*drawn "é"*/, KEY_ESC, 'a', KEY_TAB, 'q', KEY_CAPSLOCK, 'w'},
+	{KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, 13, ' ', 0, KEY_BS}
+};
+
+/* SHIFT MODE */
+uint8_t shiftkeyboard[10][8] = {
+	{KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_F9, KEY_F6, KEY_F3,KEY_ENTER, KEY_F11},
+	{KEY_LEFT ,KEY_PASTE , KEY_F7, KEY_F8, KEY_F5, KEY_F1, KEY_F2, KEY_F10},
+	{KEY_DEL, '<', 13, '>', KEY_F4, 0/*SHIFT*/, '@', 0/*CONTROL*/ },
+	{'_', '['/*drawn "°"*/, '|', 'P', '%', 'M', '+', '/'},
+	{'0', '9', 'O', 'I', 'L', 'K', '?', '.'},
+	{'8', '7', 'U', 'Y', 'H', 'J', 'N', ' '},
+	{'6', '5', 'R', 'T', 'G', 'F', 'B', 'V'},
+	{'4', '3', 'E', 'Z', 'S', 'D', 'C', 'X'},
+	{'1', '2', KEY_ESC, 'A', KEY_TAB, 'Q', 0/*CAPSLOCK*/, 'W'},
+	{KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, 13, ' ', 0, KEY_BS}
+};
+#else
 uint8_t keyboard[10][8] = {
 	{KEY_UP, KEY_RIGHT, KEY_DOWN, '9', '6', '3',13, '.'},
 	{KEY_LEFT ,KEY_COPY , '7', '8', '5', '1', '2', '0'},
@@ -54,6 +108,7 @@ uint8_t shiftkeyboard[10][8] = {
 	{'!', '"', KEY_ESC, 'Q', KEY_TAB, 'A', 0/*CAPSLOCK*/, 'Z'},
 	{KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, 13, ' ', 0, KEY_BS}
 };
+#endif
 
 
 static uint8_t shiftmask[10] = { 0, 0, 0xA0, 0, 0, 0, 0, 0, 0, 0 };

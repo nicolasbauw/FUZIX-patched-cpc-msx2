@@ -20,6 +20,12 @@
 /* Keyboard contains non-ascii symbols */
 #define CONFIG_UNIKEY
 
+/* French AZERTY matrix in Kernel/dev/cpc/cpckeyboard.c instead of the
+   original UK one - this project's own ROMs and hardware are all AZERTY
+   (see doc/roms-installation.md in the amstrad_cpc emulator repository).
+   Undef to build the UK layout back in. */
+#define CONFIG_KBD_AZERTY
+
 /* Swap based one process in RAM */
 #define CONFIG_SWAP_ONLY
 #define CONFIG_PARENT_FIRST
