@@ -27,7 +27,7 @@ struct devsw dev_tab[] =  /* The device driver switch table */
   /* 4: /dev/mem etc	System devices (one offs) */
   {  no_open,      no_close,     sys_read,      sys_write,     sys_ioctl  },
   /* 5: Pack to 7 with nxio if adding private devices and start at 8 */
-  #if defined EXTENDED_RAM_512 || defined EXTENDED_RAM_1024
+  #if defined EXTENDED_RAM_512 || defined EXTENDED_RAM_1024 || defined EXTENDED_RAM_3584
   /* 5: unused */
   {  no_open,      no_close,     no_rdwr,       no_rdwr,       no_ioctl  },
   /* 6: unused */

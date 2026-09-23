@@ -99,7 +99,27 @@
 #define SWAPBASE 0x0000
 #define SWAPTOP  0xC000UL
 #define SWAP_SIZE 0x61		/* 48K + udata */
-#define EXTENDED_RAM_1024
+#define EXTENDED_RAM_3584
+#ifdef EXTENDED_RAM_3584
+    /* Full 56-group range of the "by section" memory expansion protocol
+       (7 ports x 8 banks x 4 sub-banks of 16K = 3584K, see devrd.c and
+       amstrad_cpc/core/src/memory.rs MAX_EXTRA_RAM_GROUPS): plenty of swap
+       capacity for TOTAL_SWAP_BLOCKS to cover the full range.
+
+       MAX_SWAPS/PTABSIZE is deliberately NOT set to TOTAL_SWAP_BLOCKS /
+       SWAP_SIZE (73): struct p_tab costs kernel data per entry, and that
+       competes with plt_discard()'s reclaim of the boot-only code area into
+       block buffers (see platform-cpc6128/main.c). At 73, only ~10 buffers
+       get reclaimed and the cache starves under load - block writes race
+       each other and corrupt console output (confirmed: "no free buffers"
+       panic, then silent single-character corruption once the buffer count
+       was raised just enough to avoid the panic). 48 keeps ~14 reclaimed
+       buffers (matching the known-good baseline's headroom) while still
+       giving 2.5x the original 19 concurrent processes. */
+    #define MAX_SWAPS	48       /*See platform devrd.c*/
+    #define PTABSIZE    48
+    #define TOTAL_SWAP_BLOCKS (3712-128) * 2
+#endif
 #ifdef EXTENDED_RAM_1024
     #define MAX_SWAPS	19       /*See platform devrd.c*/
     #define PTABSIZE    19
@@ -110,7 +130,7 @@
     #define PTABSIZE    9
     #define TOTAL_SWAP_BLOCKS (576-128) * 2
 #endif
-#if defined EXTENDED_RAM_512 || defined EXTENDED_RAM_1024
+#if defined EXTENDED_RAM_512 || defined EXTENDED_RAM_1024 || defined EXTENDED_RAM_3584
     #define SWAPDEV  0x800  /* Device for swapping  - RAM disk on standard memory expansion. */
 #else
     #define CONFIG_DYNAMIC_SWAP

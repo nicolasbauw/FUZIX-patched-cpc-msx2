@@ -7,7 +7,7 @@
 #undef di
 #undef ei
 
-#if defined EXTENDED_RAM_512 || defined EXTENDED_RAM_1024
+#if defined EXTENDED_RAM_512 || defined EXTENDED_RAM_1024 || defined EXTENDED_RAM_3584
 static void CODESEG(void)  __naked { __asm .area _CODE __endasm; } /* .area _CODE */
 void rd_io(void) __naked
 {

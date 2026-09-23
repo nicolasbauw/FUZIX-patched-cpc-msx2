@@ -13,7 +13,7 @@ uint8_t plt_param(char *p)
 /* Nothing to do for the map of init */
 void map_init(void)
 {
-#if defined EXTENDED_RAM_512 || defined EXTENDED_RAM_1024	
+#if defined EXTENDED_RAM_512 || defined EXTENDED_RAM_1024 || defined EXTENDED_RAM_3584
 	uint_fast8_t i;
 	for (i = 0; i < MAX_SWAPS; i++)
 		swapmap_init(i);
