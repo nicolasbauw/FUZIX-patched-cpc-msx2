@@ -1,14 +1,14 @@
 
-DSRCS = ../../dev/devsd.c ../../dev/mbr.c ../../dev/blkdev.c
+DSRCS = ../../dev/devsd.c ../../dev/blkdev.c
 CSRCS += devfd.c devhd.c devlpr.c
-CSRCS += devices.c main.c devtty.c ../../dev/rp5c01.c ../../dev/v99xx.c vdp.c
+CSRCS += devices.c main.c devtty.c ../../dev/rp5c01.c ../../dev/v99xx.c
 COMMON_CSRCS = devmegasd.c devide_sunrise.c
 # Code in the common area (top page, copied into place by crt0): the low 48K
 # is full. Each process has its own copy of the top page, which is fine for
 # code (identical everywhere)
-TOP_CSRCS = extbuffer.c devrtc.c
-DISCARD_CSRCS = discard.c
-DISCARD_DSRCS = ../../dev/devsd_discard.c
+TOP_CSRCS = extbuffer.c devrtc.c vdp.c
+DISCARD_CSRCS = discard.c devide_sunrise_discard.c
+DISCARD_DSRCS = ../../dev/devsd_discard.c ../../dev/mbr.c
 ASRCS = msx2.s crt0.s
 ASRCS += tricks.s commonmem.s bootrom.s diskboot.s
 ASRCS += sunrise.s extbuf.s

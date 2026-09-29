@@ -18,8 +18,10 @@
 	        .area _GSINIT
 	        .area _GSFINAL
 	        .area _COMMONMEM
-		.area _FONT
 		.area _DISCARD
+		; The font is only needed by vdpinit at boot: after the discard
+		; area, it is reclaimed with it
+		.area _FONT
 
         	; imported symbols
         	.globl _fuzix_main

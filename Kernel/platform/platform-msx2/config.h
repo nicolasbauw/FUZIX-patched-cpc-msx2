@@ -13,6 +13,21 @@
 #define CONFIG_BANK16
 #define MAX_MAPS 255
 
+/* Swap, on the first partition of type 0x7F found (hda2 on the image
+   make diskimage builds). A process is saved from 0x0000 to 0xF1FF: its
+   memory, the scratch buffers at 0xE000 and the udata with the kernel stack
+   at 0xF000. The common code above is copied into a fresh top page by
+   copy_common instead. */
+#define SWAPDEV     (swap_dev)
+extern uint16_t swap_dev;
+#define CONFIG_DYNAMIC_SWAP
+#define SWAP_SIZE   0x79	/* 0x0000-0xF1FF in 512 byte blocks */
+#define SWAPBASE    0x0000
+#define SWAPTOP     0xF200
+#define MAX_SWAPS   16
+/* The driver maps the page itself (devide_sunrise.c): pass the address */
+#define swap_map(x)	((uint8_t *)(x))
+
 /* Permit large I/O requests to bypass cache and go direct to userspace */
 #define CONFIG_LARGE_IO_DIRECT(x)	1
 

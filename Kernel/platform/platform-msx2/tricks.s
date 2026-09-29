@@ -12,6 +12,8 @@
         .globl _doexec
         .globl _dofork
         .globl _runticks
+	.globl _get_common
+	.globl _swap_finish
         .globl unix_syscall_entry
         .globl interrupt_handler
 	.globl map_kernel
@@ -74,8 +76,38 @@ _switchin:
         push de ; restore stack
         push bc ; restore stack
 
-        ld hl, #P_TAB__P_PAGE_OFFSET+3	; Common
+        ld hl, #P_TAB__P_PAGE_OFFSET	; first page, 0 if swapped out
 	add hl, de		; process ptr
+	ld a, (hl)
+	or a
+	jr nz, notswapped
+	;
+	;	Swapped out. get_common() hands back in L a page holding a copy
+	;	of the common area (swapping something else out if need be),
+	;	swap_finish() then reads the process back in, udata included
+	;
+	push de
+	push hl
+	call _get_common
+	ld a, l
+	pop hl
+	pop de
+	out (0xFF), a		; the new top page: the old stack is gone
+	ld sp, #swapstack
+	push hl
+	push de
+	push de			; swap_finish(page, p)
+	push af
+	inc sp
+	call _swap_finish
+	inc sp
+	pop de
+	pop de
+	pop hl
+notswapped:
+	inc hl
+	inc hl
+	inc hl			; common page
 	ld a, (hl)
 	out (0xFF), a		; *CAUTION* our stack just left the building
 
@@ -126,6 +158,11 @@ switchinfail:
         jp _plt_monitor
 
 fork_proc_ptr: .dw 0 ; (C type is struct p_tab *) -- address of child process p_tab entry
+
+; Stack for switchin while it brings a process back from swap: in the common
+; area, so it exists in the fresh top page too
+	.ds 256
+swapstack:
 
 ;
 ;	Called from _fork. We are in a syscall, the uarea is live as the

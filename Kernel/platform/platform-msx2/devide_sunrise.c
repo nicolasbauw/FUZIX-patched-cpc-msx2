@@ -14,22 +14,12 @@ extern uint32_t ide_lba;
 extern uint8_t ide_is_read;
 uint8_t *devide_buf;
 
-static void delay(void)
-{
-    timer_t timeout;
-
-    timeout = set_timer_ms(25);
-
-    while(!timer_expired(timeout))
-       plt_idle();
-}
-
 /* We assume that memory at 0xc000-0xc1fe is not allocated
  * to solve the issue of page crossing below.
  * A sector is read, and any surplus is copied to the next page.
  * A sector is written after any surplus is copied from the next page.
  */
-static uint8_t sunrise_transfer_sector(void)
+uint8_t sunrise_transfer_sector(void)
 {
     uint8_t drive = (blk_op.blkdev->driver_data & IDE_DRIVE_NR_MASK);
     uint8_t mask = drive ? 0xF0 : 0xE0;
@@ -43,7 +33,15 @@ static uint8_t sunrise_transfer_sector(void)
         blk_op.blkdev->driver_data |= FLAG_CACHE_DIRTY;
 
     irqflags_t irq = di();
-    if (blk_op.is_user) {
+    if (blk_op.is_user == 2) {
+        /* Swap: the process page is blk_op.swap_page, the address is where
+           it sits in the process map (swap_map, config.h): bring the page in
+           at 0x8000, the IDE registers being at 0x4000 */
+        ide_addr = ((uint16_t) addr & 0x3FFF) + 0x8000;
+        RAM_PAGE2 = blk_op.swap_page;
+        status = do_ide_xfer(mask);
+        RAM_PAGE2 = 1;
+    } else if (blk_op.is_user) {
         ide_addr = ((uint16_t) addr) % 0x4000 + 0x8000;
         page_offset = (((uint16_t)addr) / 0x4000);
         page = &udata.u_page;
@@ -84,7 +82,7 @@ static uint8_t sunrise_transfer_sector(void)
     return 1;
 }
 
-static int sunrise_flush_cache(void)
+int sunrise_flush_cache(void)
 {
     uint8_t drive;
 
@@ -99,73 +97,4 @@ static int sunrise_flush_cache(void)
         return -1;
     }
     return 0;
-}
-
-static void sunrise_init_drive(uint8_t drive)
-{
-    uint8_t mask = drive ? 0xF0 : 0xE0;
-    blkdev_t *blk;
-
-    kprintf("IDE drive %d: ", drive);
-    devide_buf = tmpbuf();
-    if (do_ide_init_drive(mask) == NULL)
-        goto failout;
-    if (!(devide_buf[99] & 0x02)) {
-        kputs("LBA unsupported.\n");
-        goto failout;
-    }
-    blk = blkdev_alloc();
-    if (!blk)
-        goto failout;
-    blk->transfer = sunrise_transfer_sector;
-    blk->flush = sunrise_flush_cache;
-    blk->driver_data = drive;
-
-    if( !(((uint16_t*)devide_buf)[82] == 0x0000 && ((uint16_t*)devide_buf)[83] == 0x0000) ||
-         (((uint16_t*)devide_buf)[82] == 0xFFFF && ((uint16_t*)devide_buf)[83] == 0xFFFF) ){
-	/* command set notification is supported */
-	if(devide_buf[164] & 0x20){
-	    /* write cache is supported */
-            blk->driver_data |= FLAG_WRITE_CACHE;
-	}
-    }
-
-    /* read out the drive's sector count */
-    blk->drive_lba_count = le32_to_cpu(*((uint32_t*)&devide_buf[120]));
-
-    /* done with our temporary memory */
-    tmpfree(devide_buf);
-    blkdev_scan(blk, SWAPSCAN);
-    return;
-failout:
-    kputs("\n");
-    tmpfree(devide_buf);
-}
-
-/* byte sequence at 0x4098 to identify Sunrise IDE ROM */
-static const char sunrise_id[] = "\x40\x7e\x32\x04\x41\xf1\xe1\xc9";
-
-void sunrise_probe(void)
-{
-    uint8_t i;
-
-    ide_base = 0x7E00;
-
-    for (ide_slot = 1; ide_slot < 3; ide_slot++) {
-        mapslot_bank1(ide_slot);
-        if (memcmp((const char *)0x4098, sunrise_id, 8) == 0)
-            break;
-    }
-    mapslot_bank1(slotram);
-    if (ide_slot == 3)
-        return;
-
-    kprintf("Sunrise IDE found in slot %d\n", ide_slot);
-
-    do_ide_begin_reset();
-    delay();
-    do_ide_end_reset();
-    delay();
-    for (i = 0; i < IDE_DRIVE_COUNT; i++)
-        sunrise_init_drive(i);
 }

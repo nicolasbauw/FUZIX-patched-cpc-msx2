@@ -5,6 +5,8 @@
 #include <devtty.h>
 
 uint16_t msxmaps;
+/* Swap device, set when a swap partition is found (dev/mbr.c) */
+uint16_t swap_dev = 0xFFFF;
 
 void plt_idle(void)
 {

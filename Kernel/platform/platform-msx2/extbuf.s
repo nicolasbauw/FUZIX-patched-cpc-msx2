@@ -11,6 +11,7 @@
 	.module extbuf
 
 	.globl _extbuf_copy
+	.globl _copy_common
 	.globl _extbuf_zero
 	.globl _xb_src
 	.globl _xb_dst
@@ -57,6 +58,33 @@ _extbuf_zero:
 	ld bc,#511
 	ldir
 	jr extbuf_done
+
+;
+;	copy_common(page): make page a top page by copying the common area
+;	(0xF200 up, the part not swapped) into it, for a process coming back
+;	from swap (see get_common in bank16k.c). 0xFFFF is left out: with the
+;	RAM on the expanded slot 3, it reads as the secondary slot register.
+;
+_copy_common:
+	pop bc
+	pop de			; E = page
+	push de
+	push bc
+	ld a,i			; P/V = interrupts were enabled
+	push af
+	di
+	ld a,e
+	out (0xFD),a		; the page at 0x4000
+	ld hl,#0xF200
+	ld de,#0x7200
+	ld bc,#0x0DFF
+	ldir
+	ld a,#2
+	out (0xFD),a
+	pop af
+	ret po
+	ei
+	ret
 
 	.area _COMMONMEM
 

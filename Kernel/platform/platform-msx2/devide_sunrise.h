@@ -5,6 +5,8 @@ extern uint8_t do_ide_flush_cache(uint8_t drive) __z88dk_fastcall;
 extern unsigned do_ide_xfer(uint16_t drive) __z88dk_fastcall;
 
 extern void sunrise_probe(void);
+extern uint8_t sunrise_transfer_sector(void);
+extern int sunrise_flush_cache(void);
 
 #define IDE_DRIVE_COUNT		2
 
