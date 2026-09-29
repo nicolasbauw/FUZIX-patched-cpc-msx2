@@ -96,10 +96,61 @@ _plt_monitor:
 	    halt
 
 
+; Restart the BIOS: its init sets slots and VDP up again and scans the
+; cartridges, so FUZIX boots afresh. It expects the mapper as at power up
+; (segments 3,2,1,0 for pages 0-3), so put it back first. We run in page 3,
+; which has to become segment 0: copy the end of the routine to the same
+; offset in segment 0 (the disk buffers, of no use any more) so that it
+; carries on there. Then pages 0 and 1 go back to slot 0, the BIOS and
+; BASIC ROMs as after a reset (the BIOS init calls into page 1), and jump
+; to it. Assumes a slot 0 that is not expanded (NMS 8245 and most Philips
+; machines): the secondary register of an expanded one cannot be reached
+; from page 3.
 _plt_reboot:
-;FIXME: TODO
 	    di
-	    halt
+	    ; A software restart does not reset the cartridges: put our own
+	    ; ASCII8 banks back as at power up, and hide the Sunrise IDE
+	    ; registers again, for the BIOS scan to see plain ROMs
+	    ld a, (_slotrom)
+	    call _mapslot_bank1
+	    xor a
+	    ld (0x6000), a
+	    inc a
+	    ld (0x6800), a
+	    inc a
+	    ld (0x7000), a
+	    inc a
+	    ld (0x7800), a
+	    ld a, (_ide_slot)
+	    cp #3
+	    jr nc, reboot_noide	; 3 = no Sunrise found by the probe
+	    call _mapslot_bank1
+	    xor a
+	    ld (0x4104), a
+reboot_noide:
+	    ld a, (_slotram)	; page 1 back on the RAM for what follows
+	    call _mapslot_bank1
+	    xor a
+	    out (0xFD), a		; segment 0 at 0x4000
+	    ld hl, #reboot_stub
+	    ld de, #reboot_stub - 0x8000	; same offset in segment 0
+	    ld bc, #reboot_stub_end - reboot_stub
+	    ldir
+	    jp reboot_stub
+reboot_stub:
+	    xor a
+	    out (0xFF), a		; page 3: segment 0, where this code now is too
+	    inc a
+	    out (0xFE), a
+	    inc a
+	    out (0xFD), a
+	    inc a
+	    out (0xFC), a
+	    in a, (0xA8)
+	    and #0xF0
+	    out (0xA8), a		; pages 0 and 1 on slot 0
+	    jp 0
+reboot_stub_end:
 
 _need_resched:
 	    .db 0
