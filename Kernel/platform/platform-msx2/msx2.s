@@ -26,6 +26,7 @@
 	    .globl _need_resched
 	    .globl _workbuf
 	    .globl _blkscratch
+	    .globl _ide_bounce
 	    .globl _int_disabled
             .globl _udata
             .globl ___sdcc_enter_ix
@@ -81,6 +82,9 @@ _workbuf:
 	    .ds 1024
 _blkscratch:
 	    .ds 64
+; Sunrise IDE: a sector straddling two pages of a process goes through here
+_ide_bounce:
+	    .ds 512
 ; -----------------------------------------------------------------------------
 ; COMMON MEMORY BANK (0xF000 upwards)
 ; -----------------------------------------------------------------------------

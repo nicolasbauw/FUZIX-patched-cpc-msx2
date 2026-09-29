@@ -13,17 +13,15 @@ extern uint16_t ide_addr;
 extern uint32_t ide_lba;
 extern uint8_t ide_is_read;
 uint8_t *devide_buf;
+/* Bounce buffer for a sector straddling two 16K pages of a process
+   (msx2.s, in the top page next to the scratch buffers) */
+extern uint8_t ide_bounce[BLKSIZE];
 
-/* We assume that memory at 0xc000-0xc1fe is not allocated
- * to solve the issue of page crossing below.
- * A sector is read, and any surplus is copied to the next page.
- * A sector is written after any surplus is copied from the next page.
- */
 uint8_t sunrise_transfer_sector(void)
 {
     uint8_t drive = (blk_op.blkdev->driver_data & IDE_DRIVE_NR_MASK);
     uint8_t mask = drive ? 0xF0 : 0xE0;
-    uint8_t *page, page_offset, *addr = blk_op.addr;
+    uint8_t *addr = blk_op.addr;
     uint16_t status;
 
     ide_lba = blk_op.lba;
@@ -42,19 +40,35 @@ uint8_t sunrise_transfer_sector(void)
         status = do_ide_xfer(mask);
         RAM_PAGE2 = 1;
     } else if (blk_op.is_user) {
-        ide_addr = ((uint16_t) addr) % 0x4000 + 0x8000;
-        page_offset = (((uint16_t)addr) / 0x4000);
-        page = &udata.u_page;
-        int len = ide_addr + BLKSIZE - 0xc000;
-        if (len > 0 && !ide_is_read) {
-            RAM_PAGE2 = *(page + page_offset + 1);
-            memcpy((uint8_t *)0xc000, (uint8_t *)0x8000, len);
-        }
-        RAM_PAGE2 = *(page + page_offset);
-        status = do_ide_xfer(mask);
-        if (len > 0 && ide_is_read) {
-            RAM_PAGE2 = *(page + page_offset + 1);
-            memcpy((uint8_t *)0x8000, (uint8_t *)0xc000, len);
+        /* The process page holding the sector goes at 0x8000 */
+        uint8_t *pages = (uint8_t *)&udata.u_page;
+        uint16_t off = (uint16_t) addr & 0x3FFF;
+        uint8_t page = pages[(uint16_t) addr >> 14];
+        if (off <= 0x4000 - BLKSIZE) {
+            ide_addr = off + 0x8000;
+            RAM_PAGE2 = page;
+            status = do_ide_xfer(mask);
+        } else {
+            /* The sector straddles two pages: transfer through the bounce
+               buffer, and copy each part from or to its own page. (This
+               used to spill into 0xC000-0xC1FF, the current process's own
+               memory.) */
+            uint16_t first = 0x4000 - off;
+            uint8_t next = pages[((uint16_t) addr >> 14) + 1];
+            if (!ide_is_read) {
+                RAM_PAGE2 = page;
+                memcpy(ide_bounce, (uint8_t *)0x8000 + off, first);
+                RAM_PAGE2 = next;
+                memcpy(ide_bounce + first, (uint8_t *)0x8000, BLKSIZE - first);
+            }
+            ide_addr = (uint16_t) ide_bounce;
+            status = do_ide_xfer(mask);
+            if (ide_is_read) {
+                RAM_PAGE2 = page;
+                memcpy((uint8_t *)0x8000 + off, ide_bounce, first);
+                RAM_PAGE2 = next;
+                memcpy((uint8_t *)0x8000, ide_bounce + first, BLKSIZE - first);
+            }
         }
         RAM_PAGE2 = 1;
     } else if ((uint16_t)addr >= 0x4000 && (uint16_t)addr < 0x8000) {
