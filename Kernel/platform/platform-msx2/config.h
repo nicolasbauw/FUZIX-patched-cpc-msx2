@@ -56,6 +56,10 @@
 
 #define BOOTDEVICENAMES	"hd#,fd"
 
+/* Root to mount without asking (hold a key at boot to get the bootdev:
+   prompt back); comment out to be asked every time */
+#define BOOT_LINE	"hda1"
+
 #define MAX_BLKDEV 4      /* 2 IDE and 2 SD drives */
 #define CONFIG_RTC
 #define CONFIG_RTC_INTERVAL	10

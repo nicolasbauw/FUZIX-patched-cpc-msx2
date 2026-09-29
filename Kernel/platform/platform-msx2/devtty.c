@@ -54,6 +54,10 @@ tcflag_t termios_mask[NUM_DEV_TTY + 1] = {
 
 uint8_t keyboard[11][8];
 uint8_t shiftkeyboard[11][8];
+/* CODE and SHIFT+CODE layers of rows 0-2: all zero (CODE ignored) unless the
+   layout provides some, as the French one does */
+uint8_t codekeyboard[3][8];
+uint8_t shiftcodekeyboard[3][8];
 
 /* tty1 to tty4 is the screen */
 
@@ -177,6 +181,14 @@ static void keydecode(void)
 		return;
 	}
 
+	if ((keymap[6] & 0x10) && keybyte < 3) {	/* CODE */
+		c = (keymap[6] & 1) ? shiftcodekeyboard[keybyte][keybit]
+				    : codekeyboard[keybyte][keybit];
+		if (c)
+			vt_inproc(inputtty + 1, c);
+		return;
+	}
+
 	if (keymap[6] & 3 ) {	/* shift or control */
 		c = shiftkeyboard[keybyte][keybit];
 		/* VT switcher */
@@ -202,7 +214,7 @@ static void keydecode(void)
 	if (capslock && c >= 'a' && c <= 'z')
 		c -= 'a' - 'A';
 
-	/* TODO: function keys (F1-F10), graph, code */
+	/* TODO: function keys (F1-F10), graph */
 
 	vt_inproc(inputtty +1, c);
 }

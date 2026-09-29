@@ -6,6 +6,8 @@
 extern uint8_t keymap[11];
 extern uint8_t keyboard[11][8];
 extern uint8_t shiftkeyboard[11][8];
+extern uint8_t codekeyboard[3][8];
+extern uint8_t shiftcodekeyboard[3][8];
 
 extern void kbd_interrupt(void);
 
