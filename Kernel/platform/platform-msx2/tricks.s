@@ -14,6 +14,7 @@
         .globl _runticks
 	.globl _get_common
 	.globl _swap_finish
+	.globl istack_top
         .globl unix_syscall_entry
         .globl interrupt_handler
 	.globl map_kernel
@@ -84,8 +85,16 @@ _switchin:
 	;
 	;	Swapped out. get_common() hands back in L a page holding a copy
 	;	of the common area (swapping something else out if need be),
-	;	swap_finish() then reads the process back in, udata included
+	;	swap_finish() then reads the process back in, udata included.
 	;
+	;	Interrupts must stay off all along, udata being rebuilt: the
+	;	Sunrise driver turns them back on after a transfer unless
+	;	_int_disabled is set, and it still holds the previous process's
+	;	state (the end of switchin sets it for the new one). Being off,
+	;	the interrupt stack is free to use as our stack.
+	;
+	ld a, #1
+	ld (_int_disabled), a
 	push de
 	push hl
 	call _get_common
@@ -93,7 +102,7 @@ _switchin:
 	pop hl
 	pop de
 	out (0xFF), a		; the new top page: the old stack is gone
-	ld sp, #swapstack
+	ld sp, #istack_top
 	push hl
 	push de
 	push de			; swap_finish(page, p)
@@ -159,10 +168,6 @@ switchinfail:
 
 fork_proc_ptr: .dw 0 ; (C type is struct p_tab *) -- address of child process p_tab entry
 
-; Stack for switchin while it brings a process back from swap: in the common
-; area, so it exists in the fresh top page too
-	.ds 256
-swapstack:
 
 ;
 ;	Called from _fork. We are in a syscall, the uarea is live as the
