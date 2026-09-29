@@ -85,4 +85,12 @@ void device_init(void)
 
 void map_init(void)
 {
+    /* Point each buffer at its slot in the buffer page, as seen when that
+       page is mapped at 0x4000 (extbuffer.c) */
+    bufptr bp = bufpool;
+    uint8_t *p = (uint8_t *)0x4000;
+    while (bp < bufpool_end) {
+        (bp++)->__bf_data = p;
+        p += BLKSIZE;
+    }
 }

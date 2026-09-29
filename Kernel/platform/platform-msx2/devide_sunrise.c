@@ -59,7 +59,16 @@ static uint8_t sunrise_transfer_sector(void)
             memcpy((uint8_t *)0x8000, (uint8_t *)0xc000, len);
         }
         RAM_PAGE2 = 1;
+    } else if ((uint16_t)addr >= 0x4000 && (uint16_t)addr < 0x8000) {
+        /* A disk buffer (__bf_data is its address with the buffer page at
+           0x4000, where kernel data never sits, see extbuffer.c): the page
+           goes at 0x8000 instead, the IDE registers being at 0x4000 */
+        ide_addr = (uint16_t) addr + 0x4000;
+        RAM_PAGE2 = BUFFER_PAGE;
+        status = do_ide_xfer(mask);
+        RAM_PAGE2 = 1;
     } else {
+        /* Other kernel memory (tmpbuf for the partition table...) */
         ide_addr = (uint16_t) addr;
         status = do_ide_xfer(mask);
     }

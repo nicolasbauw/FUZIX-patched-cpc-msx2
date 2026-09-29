@@ -24,7 +24,8 @@
 	    .globl _mapslot_bank1
 	    .globl _mapslot_bank2
 	    .globl _need_resched
-            .globl _bufpool
+	    .globl _workbuf
+	    .globl _blkscratch
 	    .globl _int_disabled
             .globl _udata
             .globl ___sdcc_enter_ix
@@ -74,8 +75,12 @@
 
 	    .area _BUFFERS
 
-_bufpool:
-	    .ds BUFSIZE * NBUFS
+; Scratch buffers (tmpbuf, blkptr): the disk buffers themselves live in their
+; own mapper page, see extbuffer.c
+_workbuf:
+	    .ds 1024
+_blkscratch:
+	    .ds 64
 ; -----------------------------------------------------------------------------
 ; COMMON MEMORY BANK (0xF000 upwards)
 ; -----------------------------------------------------------------------------

@@ -20,7 +20,6 @@ static uint8_t tbuf1[TTYSIZ];
 static uint8_t tbuf2[TTYSIZ];
 static uint8_t tbuf3[TTYSIZ];
 static uint8_t tbuf4[TTYSIZ];
-static uint8_t tbuf5[TTYSIZ];
 
 uint8_t curtty;
 uint8_t inputtty;

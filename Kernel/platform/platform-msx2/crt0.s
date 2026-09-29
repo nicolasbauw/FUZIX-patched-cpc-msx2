@@ -97,6 +97,25 @@ start:
 		ld hl, #PAGE1_BASE
 		call enaslt
 
+		; binman packs common, font and discard in that order from
+		; s__DATA. The pack now runs past s__DISCARD, so the discard
+		; copy overlaps its own source: do it first, backwards
+		ld hl, #s__DATA
+		ld bc, #l__COMMONMEM
+		add hl, bc
+		ld bc, #l__FONT
+		add hl, bc
+		ld bc, #l__DISCARD
+		add hl, bc
+		dec hl			; last packed discard byte
+		push hl
+		ld hl, #s__DISCARD
+		add hl, bc
+		dec hl
+		ex de, hl		; last discard destination byte
+		pop hl
+		lddr
+
 		; move the common memory where it belongs
 		ld hl, #s__DATA
 		ld de, #s__COMMONMEM
@@ -115,11 +134,6 @@ cpfont:
 		ld a,b
 		or c
 		jr nz, cpfont
-
-		; move the discardable memory where it belongs
-		ld de, #s__DISCARD
-		ld bc, #l__DISCARD
-		ldir
 
 		exx
 		ex af,af'

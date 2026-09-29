@@ -13,6 +13,9 @@ __sfr __at (0xff) RAM_PAGE3;
 
 #define PAGE_SIZE   0x4000
 
+/* Mapper page holding the disk buffers (see extbuffer.c) */
+#define BUFFER_PAGE 0
+
 #define U_DATA		0xF000
 #define U_DATA__U_PAGE	0xF002
 

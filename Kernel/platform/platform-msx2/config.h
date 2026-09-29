@@ -19,8 +19,9 @@
 /* As reported to user space - 4 banks, 16K page size */
 #define CONFIG_BANKS	4
 
-/* reclaim discarded space for buffers */
-#define CONFIG_DYNAMIC_BUFPOOL
+/* Disk buffers in their own mapper page, shared by all processes (see
+   extbuffer.c) instead of the per-process top page */
+#define CONFIG_BLKBUF_EXTERNAL
 
 #define CONFIG_FONT6X8
 
@@ -48,8 +49,9 @@
 #define NUM_DEV_TTY 4
 #define TTYSIZ  128
 #define TTYDEV   BOOT_TTY /* Device used by kernel for messages, panics */
-#define NBUFS    7       /* Number of block buffers */
-#define NMOUNTS	 4	  /* Number of mounts at a time */
+#define NBUFS    32      /* Number of block buffers: one 16K mapper page */
+#define NMOUNTS	 3	  /* Number of mounts at a time (was 4: the low 48K
+			     is full since the buffer headers moved there) */
 
 #define CONFIG_SD
 #define SD_DRIVE_COUNT 2

@@ -6,8 +6,6 @@
 
 uint16_t msxmaps;
 
-struct blkbuf *bufpool_end = bufpool + NBUFS;
-
 void plt_idle(void)
 {
     __asm
@@ -50,8 +48,8 @@ void plt_interrupt(void)
 }
 
 /*
- *	Our disk buffer cache is slotted high above user space so we just
- *	reclaim memory back for user use and nothing is needed here.
+ *	The disk buffers live in their own mapper page (extbuffer.c): nothing
+ *	to reclaim here.
  */
 void plt_discard(void)
 {
