@@ -19,26 +19,6 @@ static uint8_t vt_buff[VT_BUFSIZE];
 static uint16_t cur_blink_addr = 0;
 static uint16_t vt_offset;
 
-void vdpinit(void)
-{
-    uint8_t i;
-
-    v99xx_set_mode(MODE_TEXT2);
-    v99xx_set_color(15, 4);
-    v99xx_copy_to_vram(VT_BASE_FONT + 32*8, (uint8_t *)&fontdata_6x8, 768);
-    v99xx_set_blink_color(15, 8);
-    v99xx_set_blink_period(4, 4);
-
-    /* clean vram for all vt's */
-    for (i = 0; i < MAX_VT; i++) {
-        v99xx_set_vram_page(i/2);
-        v99xx_memset_vram(VT_BASE + i * VT_OFFSET, ' ',  VT_HEIGHT * VT_WIDTH);
-        v99xx_memset_vram(VT_BASE_BLINK + i * VT_OFFSET, 0,
-                VT_HEIGHT * VT_WIDTH / 8);
-    }
-    vt_offset = 0;
-}
-
 void clear_lines(int8_t y, int8_t ct)
 {
     uint16_t addr;

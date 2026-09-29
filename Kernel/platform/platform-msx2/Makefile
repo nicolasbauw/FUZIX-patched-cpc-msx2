@@ -7,7 +7,7 @@ COMMON_CSRCS = devmegasd.c devide_sunrise.c
 # is full. Each process has its own copy of the top page, which is fine for
 # code (identical everywhere)
 TOP_CSRCS = extbuffer.c devrtc.c vdp.c
-DISCARD_CSRCS = discard.c devide_sunrise_discard.c
+DISCARD_CSRCS = discard.c devide_sunrise_discard.c vdp_discard.c
 DISCARD_DSRCS = ../../dev/devsd_discard.c ../../dev/mbr.c
 ASRCS = msx2.s crt0.s
 ASRCS += tricks.s commonmem.s bootrom.s diskboot.s

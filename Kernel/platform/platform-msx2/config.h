@@ -80,6 +80,9 @@ extern uint16_t swap_dev;
 #define MAX_BLKDEV 4      /* 2 IDE and 2 SD drives */
 #define CONFIG_RTC
 #define CONFIG_RTC_INTERVAL	10
+/* Full clock read/write through /dev/rtc (devrtc.c): what setdate reads to
+   skip its date and time prompts at boot */
+#define CONFIG_RTC_FULL
 /* #define CONFIG_RTC_RP5C01_NVRAM */
 
 #define plt_copyright()

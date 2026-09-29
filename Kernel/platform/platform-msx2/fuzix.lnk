@@ -9,6 +9,7 @@ platform/platform-msx2/crt0.rel
 platform/platform-msx2/commonmem.rel
 platform/platform-msx2/msx2.rel
 platform/platform-msx2/vdp.rel
+platform/platform-msx2/vdp_discard.rel
 start.rel
 version.rel
 cpu-z80/lowlevel-z80.rel
