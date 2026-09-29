@@ -173,8 +173,12 @@ retry:
 		update = 1;
 	} else {
 #ifdef SWAPDEV
-		/* Swap someone out except for us */
-		swapout(udata.u_ptab);
+		/* Swap someone out except for us (swapout() here would put
+		   us, mid exec, out on disk instead) */
+		if (swapneeded(udata.u_ptab, 1) == NULL) {
+			__hard_irqrestore(irq);
+			return ENOMEM;
+		}
 		goto retry;
 #else
 		__hard_irqrestore(irq);
@@ -238,15 +242,15 @@ uint8_t get_common(void)
 		return *--pfptr;
 	}
 	/* otherwise get alloc a page and copy common to it */
-	if (pfptr) {
+	if (pfptr != pfree) {
 		int ret = *--pfptr;
 		copy_common(ret);
 		return ret;
 	}
 	/* No free pages so swap something out */
-	/* and return it's common */
+	/* and return it's common (pagemap_free hands it back last) */
 	swapneeded(p, 0);
-	return pfree[--pfptr];
+	return *--pfptr;
 }
 
 /* Finish swapping in rest of task p, using page as it's common
