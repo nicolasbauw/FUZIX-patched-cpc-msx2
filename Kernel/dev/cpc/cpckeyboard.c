@@ -111,6 +111,77 @@ uint8_t shiftkeyboard[10][8] = {
 #endif
 
 
+/* Key translation of the host firmware, handed over by the loader in page
+   zero 0x80-0xFF (free: set_vectors() only programs the first 0x80 bytes,
+   and the kernel starts at 0x100). Two hand-overs exist:
+
+   "KB" + 2 x 56 bytes: the ROM loader (tools/fuzix-rom/loader.s in the
+	ByteBox tree) runs while the firmware is still alive and asks it for
+	every key of rows 2-8, with and without SHIFT (KM GET TRANSLATE / KM
+	GET SHIFT). Whatever OS ROM is installed then decides what the keys
+	type, exactly as in BASIC.
+
+   "KL" + 1 byte: the floppy boot sector has no room for 112 bytes (it must
+	fit in 512 and clears all memory before loading the kernel), so it
+	passes the character the firmware gives to key 67 (row 8, bit 3): "q"
+	on an English ROM, "a" on a French one. An English ROM selects the
+	table below, copied from the key translation tables of the 6128
+	English OS ROM (OS6128-EN, offsets 0x1EEF and 0x1F3F, rows 2-8). A
+	French one is what is compiled in above.
+
+   Only printable ASCII is taken over (0 in the tables below means "keep"):
+   the firmware's own codes for DEL, TAB, ESC, CAPS LOCK, SHIFT, CONTROL and
+   the function keys differ from FUZIX's, so those entries keep their
+   compiled-in values. Rows 0, 1 and 9 are never touched, for the same
+   reason. Without a signature the compiled-in table stays in force. */
+#define KBD_HANDOFF ((volatile uint8_t *)0x0080)
+
+/* Rows 2-8 of the English firmware tables, unshifted then shifted. */
+static const uint8_t en_keys[56] = {
+	0x00, 0x5B, 0x00, 0x5D, 0x00, 0x00, 0x5C, 0x00,
+	0x5E, 0x2D, 0x40, 0x70, 0x3B, 0x3A, 0x2F, 0x2E,
+	0x30, 0x39, 0x6F, 0x69, 0x6C, 0x6B, 0x6D, 0x2C,
+	0x38, 0x37, 0x75, 0x79, 0x68, 0x6A, 0x6E, 0x20,
+	0x36, 0x35, 0x72, 0x74, 0x67, 0x66, 0x62, 0x76,
+	0x34, 0x33, 0x65, 0x77, 0x73, 0x64, 0x63, 0x78,
+	0x31, 0x32, 0x00, 0x71, 0x00, 0x61, 0x00, 0x7A,
+};
+static const uint8_t en_shift_keys[56] = {
+	0x00, 0x7B, 0x00, 0x7D, 0x00, 0x00, 0x60, 0x00,
+	0x00, 0x3D, 0x7C, 0x50, 0x2B, 0x2A, 0x3F, 0x3E,
+	0x5F, 0x29, 0x4F, 0x49, 0x4C, 0x4B, 0x4D, 0x3C,
+	0x28, 0x27, 0x55, 0x59, 0x48, 0x4A, 0x4E, 0x20,
+	0x26, 0x25, 0x52, 0x54, 0x47, 0x46, 0x42, 0x56,
+	0x24, 0x23, 0x45, 0x57, 0x53, 0x44, 0x43, 0x58,
+	0x21, 0x22, 0x00, 0x51, 0x00, 0x41, 0x00, 0x5A,
+};
+
+static void kbd_apply(const uint8_t *normal, const uint8_t *shifted)
+{
+	uint8_t i, c;
+
+	for (i = 0; i < 56; i++) {
+		c = normal[i];
+		if (c >= 0x20 && c < 0x7F)
+			keyboard[2 + (i >> 3)][i & 7] = c;
+		c = shifted[i];
+		if (c >= 0x20 && c < 0x7F)
+			shiftkeyboard[2 + (i >> 3)][i & 7] = c;
+	}
+}
+
+void kbd_import_firmware_tables(void)
+{
+	volatile uint8_t *h = KBD_HANDOFF;
+
+	if (h[0] == 'K' && h[1] == 'B') {
+		kbd_apply((const uint8_t *)h + 2, (const uint8_t *)h + 58);
+	} else if (h[0] == 'K' && h[1] == 'L' && h[2] == 'q') {
+		kbd_apply(en_keys, en_shift_keys);
+	}
+	h[0] = 0;
+}
+
 static uint8_t shiftmask[10] = { 0, 0, 0xA0, 0, 0, 0, 0, 0, 0, 0 };
 static uint8_t capslock = 0;
 

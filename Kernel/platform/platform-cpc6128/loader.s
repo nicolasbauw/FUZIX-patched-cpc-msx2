@@ -6,6 +6,17 @@
 .area BOOT (ABS)
 .org #0xfdff
 
+;; Keyboard language for the kernel (see cpckeyboard.c). We are still running
+;; from |cpm with the firmware alive: ask it what key 67 (row 8, bit 3, the
+;; "Q" of a QWERTY keyboard / "A" of an AZERTY one) types. The answer goes
+;; into kbd_lang of the copy that is about to be relocated to 0xfdff - this
+;; code still runs at 0x100, hence the address arithmetic - and reaches page
+;; zero only at the very end, because the clean room below wipes everything.
+KM_GET_TRANSLATE .equ 0xbb2a
+ld a,#67
+call KM_GET_TRANSLATE
+ld (#kbd_lang-0xfdff+0x100),a
+
 ;;ROM's & interrupts off & mode 2
 
 di
@@ -300,6 +311,11 @@ read_done:
 ld bc,#0xfa7e
 ld a,#0
 out (c),a ;stop the motor
+;; hand the keyboard language over: "KL" + the character of key 67
+ld hl,#0x4c4b
+ld (#0x0080),hl
+ld a,(#kbd_lang)
+ld (#0x0082),a
 jp 0x100 ;start FUZIX
 
 ;;===============================================
@@ -369,6 +385,9 @@ ret
 
 ;; physical drive 
 ;; bit 1,0 are drive, bit 2 is side.
+kbd_lang:
+.db 0
+
 drive:
 .db 0
 

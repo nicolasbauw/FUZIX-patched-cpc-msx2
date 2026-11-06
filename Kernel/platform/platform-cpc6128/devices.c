@@ -50,8 +50,11 @@ bool validdev(uint16_t dev)
         return true;
 }
 
+extern void kbd_import_firmware_tables(void);
+
 void device_init(void)
 {
+  kbd_import_firmware_tables();
 #ifdef CONFIG_RTC_DS12885
   ds12885_init();
   if (ds12885_present)
